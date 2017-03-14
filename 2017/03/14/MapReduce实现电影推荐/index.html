@@ -1,0 +1,559 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>MapReduce实现电影推荐 | Lazy Judy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="Judy">
+    
+
+    
+    <meta name="description" content="算法概述算法的目标是，根据用户已经看过的电影来为用户合理推荐没有看过的电影。
+算法输入格式12345671,101,5.01,102,3.01,103,2.52,101,2.02,102,2.52,103,5.02,104,2.0
+第一行中，“1”代表用户id；“101”代表电影id；“5.0”表示该用户看过这部电影，并评分为5.0。
+算法输出格式12345678910111213141	101,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce实现电影推荐">
+<meta property="og:url" content="http://yoursite.com/2017/03/14/MapReduce实现电影推荐/index.html">
+<meta property="og:site_name" content="Lazy Judy">
+<meta property="og:description" content="算法概述算法的目标是，根据用户已经看过的电影来为用户合理推荐没有看过的电影。
+算法输入格式12345671,101,5.01,102,3.01,103,2.52,101,2.02,102,2.52,103,5.02,104,2.0
+第一行中，“1”代表用户id；“101”代表电影id；“5.0”表示该用户看过这部电影，并评分为5.0。
+算法输出格式12345678910111213141	101,">
+<meta property="og:image" content="http://blog.fens.me/wp-content/uploads/2013/10/alogrithm_1.jpg">
+<meta property="og:updated_time" content="2017-03-14T11:25:46.465Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce实现电影推荐">
+<meta name="twitter:description" content="算法概述算法的目标是，根据用户已经看过的电影来为用户合理推荐没有看过的电影。
+算法输入格式12345671,101,5.01,102,3.01,103,2.52,101,2.02,102,2.52,103,5.02,104,2.0
+第一行中，“1”代表用户id；“101”代表电影id；“5.0”表示该用户看过这部电影，并评分为5.0。
+算法输出格式12345678910111213141	101,">
+<meta name="twitter:image" content="http://blog.fens.me/wp-content/uploads/2013/10/alogrithm_1.jpg">
+
+    
+    <link rel="alternative" href="/atom.xml" title="Lazy Judy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.png" alt="Lazy Judy" title="Lazy Judy"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lazy Judy">Lazy Judy</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/03/14/MapReduce实现电影推荐/" title="MapReduce实现电影推荐" itemprop="url">MapReduce实现电影推荐</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
+		
+  <p class="article-time">
+    <time datetime="2017-03-13T16:00:00.000Z" itemprop="datePublished"> Published 2017-03-14</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#算法概述"><span class="toc-number">1.</span> <span class="toc-text">算法概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#算法输入格式"><span class="toc-number">1.1.</span> <span class="toc-text">算法输入格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#算法输出格式"><span class="toc-number">1.2.</span> <span class="toc-text">算法输出格式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#算法流程"><span class="toc-number">2.</span> <span class="toc-text">算法流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Step1"><span class="toc-number">2.1.</span> <span class="toc-text">Step1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step2"><span class="toc-number">2.2.</span> <span class="toc-text">Step2</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step3"><span class="toc-number">2.3.</span> <span class="toc-text">Step3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step4"><span class="toc-number">2.4.</span> <span class="toc-text">Step4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step5"><span class="toc-number">2.5.</span> <span class="toc-text">Step5</span></a></li></ol></li></ol>
+		
+		</div>
+		
+		<h1 id="算法概述"><a href="#算法概述" class="headerlink" title="算法概述"></a>算法概述</h1><p>算法的目标是，根据用户已经看过的电影来为用户合理推荐没有看过的电影。</p>
+<h2 id="算法输入格式"><a href="#算法输入格式" class="headerlink" title="算法输入格式"></a>算法输入格式</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">1,101,5.0</div><div class="line">1,102,3.0</div><div class="line">1,103,2.5</div><div class="line">2,101,2.0</div><div class="line">2,102,2.5</div><div class="line">2,103,5.0</div><div class="line">2,104,2.0</div></pre></td></tr></table></figure>
+<p>第一行中，“1”代表用户id；“101”代表电影id；“5.0”表示该用户看过这部电影，并评分为5.0。</p>
+<h2 id="算法输出格式"><a href="#算法输出格式" class="headerlink" title="算法输出格式"></a>算法输出格式</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">1	101,44.0</div><div class="line">1	102,31.5</div><div class="line">1	103,39.0</div><div class="line">1	104,33.5</div><div class="line">1	105,15.5</div><div class="line">1	106,18.0</div><div class="line">1	107,5.0</div><div class="line">2	101,45.5</div><div class="line">2	102,32.5</div><div class="line">2	103,41.5</div><div class="line">2	104,36.0</div><div class="line">2	105,15.5</div><div class="line">2	106,20.5</div><div class="line">2	107,4.0</div></pre></td></tr></table></figure>
+<p>其中，以第一行为例，“1”代表用户id；“101”代表电影id；“44.0”表示该电影的综合推荐值，这个值越大表示这个电影越值得推荐。这里我们对数据集中的所有电影都进行综合评估，没有排除掉那些用户已经看过的电影，后续可能会继续完善一下。</p>
+<h1 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h1><p>我们分五个步骤来完成这件事，每一个步骤都是一个mapreduce任务，在主函数中依次调用这五个任务。首先，给出主函数代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span></div><div class="line">	&#123;</div><div class="line">		Step1.run();</div><div class="line">		Step2.run();</div><div class="line">		Step3.run();</div><div class="line">		Step4.run();</div><div class="line">		Step5.run();</div><div class="line">		System.exit(<span class="number">0</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Step1"><a href="#Step1" class="headerlink" title="Step1"></a>Step1</h2><p>步骤一将处理成如下结构</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">1	101:5.0,102:3.0,103:2.5</div><div class="line">2	101:2.0,102:2.5,103:5.0,104:2.0</div><div class="line">3	107:5.0,105:4.5,104:4.0,101:2.0</div><div class="line">4	106:4.0,103:3.0,101:5.0,104:4.5</div><div class="line">5	104:4.0,105:3.5,106:4.0,101:4.0,102:3.0,103:2.0</div></pre></td></tr></table></figure>
+<p>以第一行为例，意义为：用户1看了101,102,103这三部电影，分别评分为5.0,3.0,2.5。至于如何得到这个结果，我先贴出map和reduce两个函数的源码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key,Text value,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String line=value.toString();</div><div class="line">	String[] tmpArr=line.split(<span class="string">","</span>);</div><div class="line">	context.write(<span class="keyword">new</span> IntWritable(Integer.parseInt(tmpArr[<span class="number">0</span>])), <span class="keyword">new</span> Text(tmpArr[<span class="number">1</span>]+<span class="string">":"</span>+tmpArr[<span class="number">2</span>]));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>map函数非常简单，将每一行用“，”切分成字符串数组后，以用户id为key，电影id和评分连接起来的新字符串作为值。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(IntWritable key,Iterable&lt;Text&gt; values,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String result=<span class="string">""</span>;</div><div class="line">	<span class="keyword">for</span>(Text val:values)</div><div class="line">	&#123;</div><div class="line">		result+=val+<span class="string">","</span>;</div><div class="line">	&#125;</div><div class="line">	result=result.substring(<span class="number">0</span>, result.length()-<span class="number">1</span>);</div><div class="line">	context.write(key, <span class="keyword">new</span> Text(result));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>reduce函数以map的输出为输入，同样key值的map输出为同一个reduce group，所以reduce就是将key值相同的所有value拼接起来，也就有了上面的结果。</p>
+<h2 id="Step2"><a href="#Step2" class="headerlink" title="Step2"></a>Step2</h2><p>步骤二以Step1的输出为输入，得到如下结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">101:101	5</div><div class="line">101:102	3</div><div class="line">101:103	4</div><div class="line">101:104	4</div><div class="line">101:105	2</div><div class="line">101:106	2</div><div class="line">101:107	1</div><div class="line">102:101	3</div><div class="line">102:102	3</div><div class="line">102:103	3</div><div class="line">102:104	2</div></pre></td></tr></table></figure>
+<p>以第2行为例，意义为：有三个用户既看了101电影又看了102电影。具体实现如下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key,Text value,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String line=value.toString();</div><div class="line">	String[] tmpArr1=line.split(<span class="string">"	"</span>);</div><div class="line">	String[] tmpArr=tmpArr1[<span class="number">1</span>].split(<span class="string">","</span>);</div><div class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;tmpArr.length;i++)</div><div class="line">	&#123;</div><div class="line">		String Item1ID=tmpArr[i].split(<span class="string">":"</span>)[<span class="number">0</span>];</div><div class="line">		<span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>;j&lt;tmpArr.length;j++)</div><div class="line">		&#123;</div><div class="line">			String Item2ID=tmpArr[j].split(<span class="string">":"</span>)[<span class="number">0</span>];</div><div class="line">			context.write(<span class="keyword">new</span> Text(Item1ID+<span class="string">":"</span>+Item2ID), <span class="keyword">new</span> IntWritable(<span class="number">1</span>));</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>map函数针对每一行输入，进行切分，切分后用双重for循环对电影ID进行两两组合，并将组合结果作为key输出，value为1。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;IntWritable&gt; values,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> result=<span class="number">0</span>;</div><div class="line">	<span class="keyword">for</span>(IntWritable val:values)</div><div class="line">	&#123;</div><div class="line">		result+=val.get();</div><div class="line">	&#125;</div><div class="line">	context.write(key, <span class="keyword">new</span> IntWritable(result));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>reduce函数很简单，其实就是一个按组计数的过程。</p>
+<h2 id="Step3"><a href="#Step3" class="headerlink" title="Step3"></a>Step3</h2><p>步骤三以Step1的输出为输入，生成如下文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">102	2:2.5,5:3.0,1:3.0</div><div class="line">103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">104	3:4.0,4:4.5,5:4.0,2:2.0</div><div class="line">105	5:3.5,3:4.5</div><div class="line">106	4:4.0,5:4.0</div><div class="line">107	3:5.0</div></pre></td></tr></table></figure>
+<p>应该。。。不用。。。解释。。。能看出。。。是什么意思的吧。恩，就默认大家都能看懂了吧。直接上代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key,Text value,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String line=value.toString();</div><div class="line">	String[] tmpArr=line.split(<span class="string">"	"</span>);</div><div class="line">	String UserID=tmpArr[<span class="number">0</span>];</div><div class="line">	String[] Item2pres=tmpArr[<span class="number">1</span>].split(<span class="string">","</span>);</div><div class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;Item2pres.length;i++)</div><div class="line">	&#123;</div><div class="line">		String[] tmp=Item2pres[i].split(<span class="string">":"</span>);</div><div class="line">		context.write(<span class="keyword">new</span> Text(tmp[<span class="number">0</span>]), <span class="keyword">new</span> Text(UserID+<span class="string">":"</span>+tmp[<span class="number">1</span>]));</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>map以电影id为key，用户id：评分为值。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;Text&gt; values,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String result=<span class="string">""</span>;</div><div class="line">	<span class="keyword">for</span>(Text val:values)</div><div class="line">	&#123;</div><div class="line">		result+=val+<span class="string">","</span>;</div><div class="line">	&#125;</div><div class="line">	result=result.substring(<span class="number">0</span>, result.length()-<span class="number">1</span>);</div><div class="line">	context.write(key, <span class="keyword">new</span> Text(result));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>reduce就是将同一个key的value连接为一个字符串。</p>
+<h2 id="Step4"><a href="#Step4" class="headerlink" title="Step4"></a>Step4</h2><p>这个步骤的任务是把Step3和Step2的输出合并为一个文件，但是重点在于是将两个文件的相应行进行合并。合并结果应该是这样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">101:103	4	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:105	2	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:101	5	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:106	2	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:107	1	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:104	4	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">101:102	3	101	1:5.0,5:4.0,4:5.0,3:2.0,2:2.0</div><div class="line">102:101	3	102	2:2.5,5:3.0,1:3.0</div><div class="line">102:102	3	102	2:2.5,5:3.0,1:3.0</div><div class="line">102:103	3	102	2:2.5,5:3.0,1:3.0</div><div class="line">102:104	2	102	2:2.5,5:3.0,1:3.0</div><div class="line">102:105	1	102	2:2.5,5:3.0,1:3.0</div><div class="line">102:106	1	102	2:2.5,5:3.0,1:3.0</div><div class="line">103:101	4	103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">103:102	3	103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">103:103	4	103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">103:104	3	103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">103:106	2	103	1:2.5,4:3.0,5:2.0,2:5.0</div><div class="line">103:105	1	103	1:2.5,4:3.0,5:2.0,2:5.0</div></pre></td></tr></table></figure>
+<p>以第一行为例，意义就是：所有用户中有4个用户的既看了101电影又看了103电影，所有看了101电影的用户对它的评分如下。之所以处理成这样，是为了最后一步的矩阵计算做准备。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key,Text value,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String line=value.toString();</div><div class="line">	String[] tmpArr=line.split(<span class="string">"	"</span>);</div><div class="line">	String[] tmpArr2=tmpArr[<span class="number">0</span>].split(<span class="string">":"</span>);</div><div class="line">	<span class="keyword">if</span>(tmpArr2.length==<span class="number">2</span>)</div><div class="line">	&#123;</div><div class="line">		context.write(<span class="keyword">new</span> Text(tmpArr2[<span class="number">0</span>]), value);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span></div><div class="line">	&#123;</div><div class="line">		dict.put(tmpArr[<span class="number">0</span>], line);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个步骤的特殊之处在于它的输入是两种格式不同的文件，对它们要进行不同的处理，并且要将结果统一成key和value的形式再传给reduce。map函数中用if和else来分别处理两个文件，if处理的是Step2的输出，输出的key是文件的第一个字段，value是输入的这一行文件。else处理的是Step3的输出，将这个文件每一行按键值对的方式存放再全局字典中（Java的HashMap）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;Text&gt; values,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	<span class="keyword">for</span>(Text val:values)</div><div class="line">	&#123;</div><div class="line">		String ItemID=<span class="keyword">new</span> String(key.getBytes());</div><div class="line">		context.write(val, <span class="keyword">new</span> Text(dict.get(ItemID)));</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>reduce将key值相同的map输出和dit中对应的值连接起来。</p>
+<h2 id="Step5"><a href="#Step5" class="headerlink" title="Step5"></a>Step5</h2><p>这个步骤应该是最复杂的了。先上个图<br><img src="http://blog.fens.me/wp-content/uploads/2013/10/alogrithm_1.jpg" alt="矩阵计算推荐结果"></p>
+<p>上面的图中，左边的矩阵中的每个数值表示所有用户中既看了该行对应的电影又看了该列对应的电影的用户数量，也就是Step2中我们的计算结果,右边的列向量表示用户3对每个电影的评分，等号右边就是对每个电影的推荐值。具体实现如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key,Text value,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String line=value.toString();</div><div class="line">	String[] tmpArr1=line.split(<span class="string">"	"</span>);</div><div class="line">	String Item=tmpArr1[<span class="number">0</span>].split(<span class="string">":"</span>)[<span class="number">1</span>];</div><div class="line">	String[] userPre2CurItems=tmpArr1[<span class="number">3</span>].split(<span class="string">","</span>);</div><div class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;userPre2CurItems.length;i++)</div><div class="line">	&#123;</div><div class="line">		String[] tmp=userPre2CurItems[i].split(<span class="string">":"</span>);</div><div class="line">		<span class="keyword">double</span> curValue=Integer.parseInt(tmpArr1[<span class="number">1</span>])*Double.parseDouble(tmp[<span class="number">1</span>]);</div><div class="line">		context.write(<span class="keyword">new</span> Text(tmp[<span class="number">0</span>]+<span class="string">"	"</span>+Item), <span class="keyword">new</span> DoubleWritable(curValue));</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>map输出的key是用户id和当前评价的电影id，输出的值其实是当前评价的电影的推荐值的一部分。for循环是针对每一个用户计算，并不是针对每一个电影计算。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;DoubleWritable&gt; values,Context context)</span></span></div><div class="line">		<span class="keyword">throws</span> IOException,InterruptedException</div><div class="line">&#123;</div><div class="line">	String tmpStr=<span class="keyword">new</span> String(key.getBytes());</div><div class="line">	String[] tmp=tmpStr.split(<span class="string">"	"</span>);</div><div class="line">	<span class="keyword">double</span> result=<span class="number">0</span>;</div><div class="line">	<span class="keyword">for</span>(DoubleWritable val:values)</div><div class="line">	&#123;</div><div class="line">		result+=val.get();</div><div class="line">	&#125;</div><div class="line">	context.write(<span class="keyword">new</span> Text(tmp[<span class="number">0</span>]), <span class="keyword">new</span> Text(tmp[<span class="number">1</span>]+<span class="string">","</span>+result));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>reduce将用户id和电影id都相同的值累加，最终输出最终结果。</p>
+<p><a href="https://github.com/Lazy-Pig/MapReduceExample" target="_blank" rel="external">源码下载</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/时间沉淀技术/">时间沉淀技术</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/hadoop/">hadoop</a><a href="/tags/MapReduce/">MapReduce</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="http://yoursite.com/2017/03/14/MapReduce实现电影推荐/" data-title="MapReduce实现电影推荐 | Lazy Judy" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2016/01/14/ubuntu下mySQL使用/"  title="Ubuntu下MySQL使用">
+ <strong>下一篇：</strong><br/> 
+ <span>Ubuntu下MySQL使用
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#算法概述"><span class="toc-number">1.</span> <span class="toc-text">算法概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#算法输入格式"><span class="toc-number">1.1.</span> <span class="toc-text">算法输入格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#算法输出格式"><span class="toc-number">1.2.</span> <span class="toc-text">算法输出格式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#算法流程"><span class="toc-number">2.</span> <span class="toc-text">算法流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Step1"><span class="toc-number">2.1.</span> <span class="toc-text">Step1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step2"><span class="toc-number">2.2.</span> <span class="toc-text">Step2</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step3"><span class="toc-number">2.3.</span> <span class="toc-text">Step3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step4"><span class="toc-number">2.4.</span> <span class="toc-text">Step4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step5"><span class="toc-number">2.5.</span> <span class="toc-text">Step5</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/时间沉淀技术/" title="时间沉淀技术">时间沉淀技术<sup>8</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/胡思乱想/" title="胡思乱想">胡思乱想<sup>2</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/思考/" title="思考">思考<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux学习笔记/" title="Linux学习笔记">Linux学习笔记<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Web/" title="Web">Web<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/MapReduce/" title="MapReduce">MapReduce<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/blog/" title="blog">blog<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Github/" title="Github">Github<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Princeton-Algorithms/" title="Princeton Algorithms">Princeton Algorithms<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/linux/" title="linux">linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/os/" title="os">os<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/hadoop/" title="hadoop">hadoop<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/MySQL/" title="MySQL">MySQL<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux中鸡毛蒜皮的配置问题/" title="Linux中鸡毛蒜皮的配置问题">Linux中鸡毛蒜皮的配置问题<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="https://coderq.com" target="_blank" title="一个面向程序员交流分享的新一代社区">码农圈</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://wuchong.me" target="_blank" title="Jark&#39;s Blog">Jark&#39;s Blog</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+  <div class="weiboshow">
+  <p class="asidetitle">Weibo</p>
+    <iframe width="100%" height="119" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=119&fansRow=2&ptype=1&speed=0&skin=9&isTitle=1&noborder=1&isWeibo=0&isFans=0&uid=null&verifier=&dpc=1"></iframe>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<section class="info">
+		<p> Hello ,I&#39;m Lazy Judy. <br/>
+			This is my blog,believe it or not.</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="Judy">Judy</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?e6d1f421bbc9962127a50488f9ed37d1";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
