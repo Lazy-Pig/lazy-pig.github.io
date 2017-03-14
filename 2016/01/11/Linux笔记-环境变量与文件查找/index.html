@@ -1,0 +1,676 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Linux的环境变量与文件查找 | Lazy-Pig</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="Judy">
+    
+
+    
+    <meta name="description" content="一、变量变量的声明、赋值与读取使用declare命令创建一个变量，例如创建一个变量名为tmp的变量
+1$ declare tmp
+变量的赋值
+1$ tmp=shiyanlou
+读取变量的值，使用echo命令和$符号（$符号用于表示引用一个变量的值）
+1$ echo $tmp
+注意！变量名只能是英文字母,数字或者下划线，且不能以数字作为开头！
+二、环境变量shell的环境变量作用于自身和它的子进程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux的环境变量与文件查找">
+<meta property="og:url" content="http://yoursite.com/2016/01/11/Linux笔记-环境变量与文件查找/index.html">
+<meta property="og:site_name" content="Lazy-Pig">
+<meta property="og:description" content="一、变量变量的声明、赋值与读取使用declare命令创建一个变量，例如创建一个变量名为tmp的变量
+1$ declare tmp
+变量的赋值
+1$ tmp=shiyanlou
+读取变量的值，使用echo命令和$符号（$符号用于表示引用一个变量的值）
+1$ echo $tmp
+注意！变量名只能是英文字母,数字或者下划线，且不能以数字作为开头！
+二、环境变量shell的环境变量作用于自身和它的子进程。">
+<meta property="og:image" content="https://dn-anything-about-doc.qbox.me/linux_base/5-2.png/logoblackfont">
+<meta property="og:image" content="https://dn-anything-about-doc.qbox.me/linux_base/5-8.png">
+<meta property="og:updated_time" content="2017-03-12T14:27:43.291Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux的环境变量与文件查找">
+<meta name="twitter:description" content="一、变量变量的声明、赋值与读取使用declare命令创建一个变量，例如创建一个变量名为tmp的变量
+1$ declare tmp
+变量的赋值
+1$ tmp=shiyanlou
+读取变量的值，使用echo命令和$符号（$符号用于表示引用一个变量的值）
+1$ echo $tmp
+注意！变量名只能是英文字母,数字或者下划线，且不能以数字作为开头！
+二、环境变量shell的环境变量作用于自身和它的子进程。">
+<meta name="twitter:image" content="https://dn-anything-about-doc.qbox.me/linux_base/5-2.png/logoblackfont">
+
+    
+    <link rel="alternative" href="/atom.xml" title="Lazy-Pig" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.png" alt="Lazy-Pig" title="Lazy-Pig"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Lazy-Pig">Lazy-Pig</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/01/11/Linux笔记-环境变量与文件查找/" title="Linux的环境变量与文件查找" itemprop="url">Linux的环境变量与文件查找</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
+		
+  <p class="article-time">
+    <time datetime="2016-01-10T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-11</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、变量"><span class="toc-number">1.</span> <span class="toc-text">一、变量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#变量的声明、赋值与读取"><span class="toc-number">1.1.</span> <span class="toc-text">变量的声明、赋值与读取</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、环境变量"><span class="toc-number">2.</span> <span class="toc-text">二、环境变量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#相关命令"><span class="toc-number">2.1.</span> <span class="toc-text">相关命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加自定义路径到”PATH”环境变量"><span class="toc-number">2.2.</span> <span class="toc-text">添加自定义路径到”PATH”环境变量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#变量删除"><span class="toc-number">2.2.1.</span> <span class="toc-text">变量删除</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何让环境变量立即生效"><span class="toc-number">2.3.</span> <span class="toc-text">如何让环境变量立即生效</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、搜索文件"><span class="toc-number">3.</span> <span class="toc-text">三、搜索文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#whereis简单快速"><span class="toc-number">3.1.</span> <span class="toc-text">whereis简单快速</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#locate快而全"><span class="toc-number">3.2.</span> <span class="toc-text">locate快而全</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#which小而精"><span class="toc-number">3.3.</span> <span class="toc-text">which小而精</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#find精而细"><span class="toc-number">3.4.</span> <span class="toc-text">find精而细</span></a></li></ol></li></ol>
+		
+		</div>
+		
+		<h1 id="一、变量"><a href="#一、变量" class="headerlink" title="一、变量"></a>一、变量</h1><h2 id="变量的声明、赋值与读取"><a href="#变量的声明、赋值与读取" class="headerlink" title="变量的声明、赋值与读取"></a>变量的声明、赋值与读取</h2><p>使用declare命令创建一个变量，例如创建一个变量名为tmp的变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ declare tmp</div></pre></td></tr></table></figure>
+<p>变量的赋值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ tmp=shiyanlou</div></pre></td></tr></table></figure>
+<p>读取变量的值，使用echo命令和$符号（<strong>$符号用于表示引用一个变量的值</strong>）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ echo $tmp</div></pre></td></tr></table></figure>
+<p><strong>注意！变量名只能是英文字母,数字或者下划线，且不能以数字作为开头！</strong></p>
+<h1 id="二、环境变量"><a href="#二、环境变量" class="headerlink" title="二、环境变量"></a>二、环境变量</h1><p>shell的环境变量作用于自身和它的子进程。在所有的Unix和类Unix系统中，每个进程都有其各自的环境变量设置，且默认情况下，当一个进程被创建时，处理创建过程中明确指定的话，它将继承其父进程的绝大部分环境设置。shell程序也作为一个进程运行在操作系统之上，而我们在shell中运行的大部分命令都将以shell的子进程的方式运行。</p>
+<p><img src="https://dn-anything-about-doc.qbox.me/linux_base/5-2.png/logoblackfont" alt="进程演示图"></p>
+<h2 id="相关命令"><a href="#相关命令" class="headerlink" title="相关命令"></a>相关命令</h2><p>三种环境变量相关的命令，set，env，export</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>set</td>
+<td>显示当前shell所有环境变量，包括其内建环境变量（与shell外观等相关），用户自定义变量及导出的环境变量</td>
+</tr>
+<tr>
+<td>env</td>
+<td>显示与当前用户相关的环境变量，还可以让命令在指定环境中运行</td>
+</tr>
+<tr>
+<td>export</td>
+<td>显示从shell中导出成环境变量的变量，也能通过它将自定义变量导出为环境变量</td>
+</tr>
+</tbody>
+</table>
+<p>可以通过以下测试体会环境变量和普通变量的区别</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">$ temp=shiyanlou</div><div class="line">$ echo $temp</div><div class="line"></div><div class="line">shiyanlou</div><div class="line"></div><div class="line">$ zsh    //创建一个子shell，在ubuntu中默认shell为bash</div><div class="line">$ echo $temp</div><div class="line"></div><div class="line">        //显示空</div><div class="line"></div><div class="line">$ exit  //推出子shell</div><div class="line">$ export temp   //把temp变量导出为环境变量</div><div class="line">$ zsh    //重新创建子shell</div><div class="line">$ echo $temp</div><div class="line"></div><div class="line">shiyanlou</div></pre></td></tr></table></figure>
+<p><strong>!!!注意!!! 为了与普通变量区分，通常我们习惯将环境变量名设为大写</strong></p>
+<p>##命令的查找路径与顺序</p>
+<p>我们在hell中输入一个命令，shell是怎么知道在哪去找到这个命令然后执行的呢。这是通过环境变量PATH来进行搜索的。这个PATH里面就保存了shell中执行的命令的搜索路径。</p>
+<p>查看PATH环境变量的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ echo $PATH</div></pre></td></tr></table></figure>
+<p>默认情况下你会看到如下输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games</div></pre></td></tr></table></figure>
+<p>通常这一类目录下放的都是可执行文件，当我们在shell中执行一个命令时，系统就会按照PATH中设定的路径按照顺序依次到目录中去查找，如果存在同名的命令，则执行先找到的那个。下面我们将练习创建一个最简单的可执行shell脚本和一个使用C语言创建的”hello world”程序。</p>
+<p>创建一个shell脚本文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hello_shell.sh</div></pre></td></tr></table></figure>
+<p>在脚本中添加如下内容，保存并退出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/zsh</div><div class="line"></div><div class="line">for ((i=0; i&lt;10; i++));do</div><div class="line">    echo &quot;hello shell&quot;</div><div class="line">done</div><div class="line"></div><div class="line">exit 0</div></pre></td></tr></table></figure>
+<p>为文件添加可执行权限</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ chmod 755 hello_shell.sh</div></pre></td></tr></table></figure>
+<p>创建一个c语言”hello world”程序：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hello_world.c</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line"></div><div class="line">int main(void)</div><div class="line">&#123;</div><div class="line">    printf(&quot;hello world!\n&quot;);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用gcc生成可执行文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ gcc -o hello_world hello_world.c</div></pre></td></tr></table></figure>
+<p>在shiyanlou家目录创建一个mybin目录，并将上述hello_shell.sh和hello_world文件移动到其中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ mkdir mybin</div><div class="line">$ mv hello_shell.sh hello_world mybin/</div></pre></td></tr></table></figure>
+<p>现在你可以在mybin目录中分别运行你刚刚创建的两个程序</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ cd mybin</div><div class="line">$ ./hello_shell.sh</div><div class="line">$ ./hello_world</div></pre></td></tr></table></figure>
+<p>然后你回到上一级目录，也就是shiyanlou家目录，你再想运行那两个程序，会发现提示命令找不到，除非你加上命令的完整路径，但是这样不是很麻烦嘛，如何做到想使用系统命令一样执行自己创建的脚本文件或者程序呢。那就要将命令所在路径添加到PATH环境变量了。</p>
+<h2 id="添加自定义路径到”PATH”环境变量"><a href="#添加自定义路径到”PATH”环境变量" class="headerlink" title="添加自定义路径到”PATH”环境变量"></a>添加自定义路径到”PATH”环境变量</h2><p>在前面我们应该注意到PATH里面的路径是以：作为分割符，所以我们可以这样添加自定义路径</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ PATH=$PATH:/home/shiyanlou/mybin</div></pre></td></tr></table></figure>
+<p><strong>!!!注意这里一定要使用绝对路径</strong></p>
+<p>现在你就可以在其他任意目录执行那两个命令了。你可能会意识到这样还并没有很好的解决问题，因为我给PATH环境变量追加了一个路径，它也只是在当前shell有效，我一旦退出终端，再打开就会发现又失效了。有没有方法让添加的环境变量全局有效又或者每次启动shell时自动执行上面添加自定义路径到PATH的命令了。下面我们就来说说后一种方式——让它自动执行。</p>
+<p>在每个用户的家目录中有一个shell每次启动时会默认执行一个配置脚本，以初始化环境，包括添加一些用户自定义环境变量等等。zsh的配置文件是.zshrc，相应bash的配置文件为.bashrc。它们在etc下还都有一个或多个全局的配置文件，不过我们一般只修改用户目录下的配置文件。</p>
+<p>我们可以简单的使用下面命令直接添加内容到.zshrc中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ echo &quot;PATH=$PATH:/home/shiyanlou/mybin&quot; &gt;&gt; .zshrc</div></pre></td></tr></table></figure>
+<p>上述命令中 <strong>&gt;&gt;表示将标准输出以追加的方式重定向到一个文件中</strong>，注意前面用到的 <strong>&gt;是以覆盖的方式重定向到一个文件中</strong>，使用的时候一定要注意分辨。在指定文件不存在的情况下都会创建新的文件</p>
+<p>##修改和删除已有的变量</p>
+<p>###变量的修改</p>
+<p>变量的修改有以下几种方式:</p>
+<table>
+<thead>
+<tr>
+<th>变量设置方式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>${变量名#匹配字串}</td>
+<td>从头向后开始匹配，删除符合匹配字串的最短数据</td>
+</tr>
+<tr>
+<td>${变量名##匹配字串}</td>
+<td>从头向后开始匹配，删除符合匹配字串的最长数据</td>
+</tr>
+<tr>
+<td>${变量名%匹配字串}</td>
+<td>从尾向前开始匹配，删除符合匹配字串的最短数据</td>
+</tr>
+<tr>
+<td>${变量名%%匹配字串}</td>
+<td>从尾向前开始匹配，删除符合匹配字串的最长数据</td>
+</tr>
+<tr>
+<td>${变量名/旧的字串/新的字串}</td>
+<td>将符合旧字串的第一个字串替换为新的字串</td>
+</tr>
+<tr>
+<td>${变量名//旧的字串/新的字串}</td>
+<td>比如要修改我们前面添加到PATH的环境变量：</td>
+</tr>
+</tbody>
+</table>
+<p>比如修改我们前面添加到PATH的环境变量</p>
+<p>为了避免操作失误导致命令找不到，我们先将PATH赋值给一个新的自定义变量path将符合旧字串的全部字串替换为新的字串</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ path=$PATH</div><div class="line">$ echo $path</div><div class="line">$ path=$&#123;path%/home/shiyanlou/mybin&#125;</div><div class="line"># 或使用通配符,*表示任意多个任意字符</div><div class="line">$ path=$&#123;path%*/mybin&#125;</div></pre></td></tr></table></figure>
+<h3 id="变量删除"><a href="#变量删除" class="headerlink" title="变量删除"></a>变量删除</h3><p>可以使用unset命令删除一个环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ unset temp</div></pre></td></tr></table></figure>
+<h2 id="如何让环境变量立即生效"><a href="#如何让环境变量立即生效" class="headerlink" title="如何让环境变量立即生效"></a>如何让环境变量立即生效</h2><p>在上面我们在shell中修改了一个配置脚本文件之后（比如zsh的配置文件home目录下的.zshrc），每次都要退出终端重新打开甚至重启主机之后其才能生效，很是麻烦，我们可以使用source命令来让其立即生效。</p>
+<p>例如</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ source .zshrc</div></pre></td></tr></table></figure>
+<p>source命令还有一个别名就是.，注意与表示当前路径的那个点区分开，虽然形式一样，但作用和使用方式一样，上面的命令如果替换成.的方式就该是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ . ./.zshrc</div></pre></td></tr></table></figure>
+<p>注意第一个点后面有一个空格，而且后面的文件必须指定完整的绝对或相对路径名，source则不需要</p>
+<h1 id="三、搜索文件"><a href="#三、搜索文件" class="headerlink" title="三、搜索文件"></a>三、搜索文件</h1><p>与搜索相关的命令常用的有如下几个whereis,which,find,locate</p>
+<h2 id="whereis简单快速"><a href="#whereis简单快速" class="headerlink" title="whereis简单快速"></a>whereis简单快速</h2><p>很快，它快是因为它并没有从硬盘老老实实挨个去找，而是直接从数据库中查询。whereis只能搜索二进制文件(-b)，man帮助文件(-m)和源代码文件(-s)。</p>
+<h2 id="locate快而全"><a href="#locate快而全" class="headerlink" title="locate快而全"></a>locate快而全</h2><p>查找/etc下所有以sh开头的文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ locate /etc/sh</div></pre></td></tr></table></figure>
+<p><strong>注意,它不只是在etc目录下查找并会自动递归子目录进行查找</strong></p>
+<p>查找/usr/share/下所有jpg文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ locate /usr/share/\*.jpg</div></pre></td></tr></table></figure>
+<p><strong>注意要添加*号前面的反斜杠转义，否则会无法找到</strong></p>
+<p>如果想只统计数目可以加上-c参数，-i参数可以忽略大小写进行查找，whereis的-b,-m，-s同样可以是使用</p>
+<h2 id="which小而精"><a href="#which小而精" class="headerlink" title="which小而精"></a>which小而精</h2><p>which本身是shell内建的一个命令，我们通常使用which来确定是否安装了某个指定的软件，因为它只从PATH环境变量指定的路径中去搜索命令</p>
+<h2 id="find精而细"><a href="#find精而细" class="headerlink" title="find精而细"></a>find精而细</h2><p>find应该是这几个命令中最强大的了，它不但可以通过文件类型、文件名进行查找而且可以根据文件的属性（如文件的时间戳，文件的权限等）进行搜索。find命令强大到，要把它将明白至少需要单独好几节课程才行，我们这里就只介绍一些常用的内容</p>
+<p>在指定目录下搜索指定文件名的文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ find /etc/ -name interfaces</div></pre></td></tr></table></figure>
+<p><strong>注意find命令的路径是作为第一个参数的， 基本命令格式为 find [path] [option] [action]</strong></p>
+<p>与时间相关的命令参数</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-atime</td>
+<td>最后访问时间</td>
+</tr>
+<tr>
+<td>-ctime</td>
+<td>创建时间</td>
+</tr>
+<tr>
+<td>-mtime</td>
+<td>最后修改时间</td>
+</tr>
+</tbody>
+</table>
+<p>下面以-mtime参数举例</p>
+<blockquote>
+<ul>
+<li>-mtime n: n 为数字，表示为在n天之前的”一天之内“修改过的文件</li>
+<li>-mtime +n: 列出在n天之前（不包含n天本身）被修改过的文件</li>
+<li>-mtime -n: 列出在n天之前（包含n天本身）被修改过的文件</li>
+<li>newer file: file为一个已存在的文件，列出比file还要新的文件名</li>
+</ul>
+</blockquote>
+<p><img src="https://dn-anything-about-doc.qbox.me/linux_base/5-8.png" alt="时间轴"></p>
+<p>列出home目录中，当天（24小时之内）有改动的文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ find ~ -mtime 0</div></pre></td></tr></table></figure>
+<p>列出比某个文件新的所有文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># 姑且利用一下工程师配置环境时遗留的test.c~文件吧-_-||</div><div class="line">$ find ~ newer Documents/test.c\~</div></pre></td></tr></table></figure>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/时间沉淀技术/">时间沉淀技术</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Linux学习笔记/">Linux学习笔记</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="http://yoursite.com/2016/01/11/Linux笔记-环境变量与文件查找/" data-title="Linux的环境变量与文件查找 | Lazy-Pig" data-tsina="252493575@qq.com" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/01/12/Linux笔记-用户管理/" title="Linux用户及文件权限管理">
+  <strong>上一篇：</strong><br/>
+  <span>
+  Linux用户及文件权限管理</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/01/10/Algorithms-Union-Find/"  title="Union-Find">
+ <strong>下一篇：</strong><br/> 
+ <span>Union-Find
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、变量"><span class="toc-number">1.</span> <span class="toc-text">一、变量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#变量的声明、赋值与读取"><span class="toc-number">1.1.</span> <span class="toc-text">变量的声明、赋值与读取</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、环境变量"><span class="toc-number">2.</span> <span class="toc-text">二、环境变量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#相关命令"><span class="toc-number">2.1.</span> <span class="toc-text">相关命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加自定义路径到”PATH”环境变量"><span class="toc-number">2.2.</span> <span class="toc-text">添加自定义路径到”PATH”环境变量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#变量删除"><span class="toc-number">2.2.1.</span> <span class="toc-text">变量删除</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何让环境变量立即生效"><span class="toc-number">2.3.</span> <span class="toc-text">如何让环境变量立即生效</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、搜索文件"><span class="toc-number">3.</span> <span class="toc-text">三、搜索文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#whereis简单快速"><span class="toc-number">3.1.</span> <span class="toc-text">whereis简单快速</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#locate快而全"><span class="toc-number">3.2.</span> <span class="toc-text">locate快而全</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#which小而精"><span class="toc-number">3.3.</span> <span class="toc-text">which小而精</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#find精而细"><span class="toc-number">3.4.</span> <span class="toc-text">find精而细</span></a></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/时间沉淀技术/" title="时间沉淀技术">时间沉淀技术<sup>7</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/胡思乱想/" title="胡思乱想">胡思乱想<sup>2</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/Linux学习笔记/" title="Linux学习笔记">Linux学习笔记<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/思考/" title="思考">思考<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Web/" title="Web">Web<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Princeton-Algorithms/" title="Princeton Algorithms">Princeton Algorithms<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/blog/" title="blog">blog<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Github/" title="Github">Github<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/linux/" title="linux">linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/os/" title="os">os<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/MySQL/" title="MySQL">MySQL<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux中鸡毛蒜皮的配置问题/" title="Linux中鸡毛蒜皮的配置问题">Linux中鸡毛蒜皮的配置问题<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://wuchong.me" target="_blank" title="Jark&#39;s Blog">Jark&#39;s Blog</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<section class="info">
+		<p> Hello ,I&#39;m Lazy Judy. <br/>
+			一只爱玩耍，爱下厨的萌帅猪。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		<a href="http://weibo.com/2431107805" target="_blank" class="icon-weibo" title="微博"></a>
+		
+		
+		<a href="https://github.com/Lazy-Pig" target="_blank" class="icon-github" title="github"></a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		<a href="mailto:sunseekerjudy@gmail.com" target="_blank" class="icon-email" title="Email Me"></a>
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2017 
+		
+		<a href="/about" target="_blank" title="Judy">Judy</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
