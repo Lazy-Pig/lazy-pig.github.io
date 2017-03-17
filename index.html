@@ -44,7 +44,7 @@
 				<h1 class="site-name"><a href="/" title="Lazy Judy">Lazy Judy</a></h1>
 				<h2 class="blog-motto"></h2>
 			</div>
-			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
 			</a></div>
 			<nav class="animated">
 				<ul>
@@ -60,7 +60,7 @@
  					
 					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
 						<label>Search</label>
-						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
 						<input type="hidden" name="q" value="site:yoursite.com">
 					</form>
 					
@@ -85,7 +85,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2017-03-15T16:00:00.000Z" itemprop="datePublished"> Published 2017-03-16</time>
+    <time datetime="2017-03-15T16:00:00.000Z" itemprop="datePublished"> 发表于 2017-03-16</time>
     
   </p>
 </header>
@@ -103,6 +103,10 @@
 </blockquote>
 <h3 id="倒排索引概要"><a href="#倒排索引概要" class="headerlink" title="倒排索引概要"></a>倒排索引概要</h3><p>倒排索引模式一般是建立一个项到标识符列表的映射。顾名思义就是建立一个索引列表。例如，搜索引擎一般需要建立的关键字到网址的列表，从而用户可以通过关键字找到与关键字相关的网页。</p>
 <h3 id="计数器计数"><a href="#计数器计数" class="headerlink" title="计数器计数"></a>计数器计数</h3><p>这个模式使用 MapReduce框架自身的计数器在不产生任何输出的情况下，在map阶段计算出一个全局计数。因此，我们可以用计数器来重新实现一下“单词计数”的算法，而且用计数器来实现计数效率要高很多。需要注意的是，由于计数器是存在全局内存中的，map工作完成后所有的TaskTracker将统计结果汇总给JobTracker（一般就是namenode），所以计数器的数量过多会造成namenode内存瓶颈或者溢出，因而，计数器的数量最多不能超过100个，一般应该控制在50个以下为好。</p>
+<h2 id="过滤模式"><a href="#过滤模式" class="headerlink" title="过滤模式"></a>过滤模式</h2><h3 id="过滤"><a href="#过滤" class="headerlink" title="过滤"></a>过滤</h3><p>顾名思义就是对输入的所有行进行过滤，输出留下满足条件的行，忽略不满足条件的行。这种模式只有map没有reduce，在map中对每一行进行是否满足条件的判断，根据判断结果决定是输出（留下）该行数据还是忽略（扔掉）该行数据。</p>
+<h3 id="布隆过滤"><a href="#布隆过滤" class="headerlink" title="布隆过滤"></a>布隆过滤</h3><p>布隆过滤与上面的过滤很相似，不同点在于布隆过滤中预先设定一个列表，列表中有一些值，只要输入的当前行包含其中的任意一个值就认为该行满足条件可以输出。布隆过滤仍然只有map没有reduce。</p>
+<h3 id="Top-10"><a href="#Top-10" class="headerlink" title="Top 10"></a>Top 10</h3><p>Top10顾名思义就是从所有的输入行中过滤出某字段的前10名输入行。这种模式map阶段维护一个长度为10的列表，列表的长度小于10的时候向列表中直接添加，直到列表的长度等于10时，则删除列表中最小的元素并添加新元素。需要注意的是这种模式可以有多个map但只能有一个reduce，reduce从N个map输出的10N个元素中找出前10作为最终的输出。可以看出，由于只能有一个reduce所以如果取Top100甚至更多时，效率是很低的。因此这种模式只适合较小的取值。</p>
+<h3 id="去重"><a href="#去重" class="headerlink" title="去重"></a>去重</h3><p>去重既将所有输入中某个字段重复的输入过滤掉，例如，在所有用户评论中找出所有不同的用户名。这种模式中map的输出键是map的输入值，map的输出值是null。reduece只需输出reduece的输入key即可。</p>
 <p><strong>未完待续</strong></p>
 
         
@@ -157,7 +161,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2017-03-13T16:00:00.000Z" itemprop="datePublished"> Published 2017-03-14</time>
+    <time datetime="2017-03-13T16:00:00.000Z" itemprop="datePublished"> 发表于 2017-03-14</time>
     
   </p>
 </header>
@@ -258,7 +262,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-13T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-14</time>
+    <time datetime="2016-01-13T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-14</time>
     
   </p>
 </header>
@@ -323,7 +327,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-11T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-12</time>
+    <time datetime="2016-01-11T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-12</time>
     
   </p>
 </header>
@@ -462,7 +466,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-10T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-11</time>
+    <time datetime="2016-01-10T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-11</time>
     
   </p>
 </header>
@@ -686,7 +690,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-10T08:30:00.000Z" itemprop="datePublished"> Published 2016-01-10</time>
+    <time datetime="2016-01-10T08:30:00.000Z" itemprop="datePublished"> 发表于 2016-01-10</time>
     
   </p>
 </header>
@@ -754,7 +758,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-09T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-10</time>
+    <time datetime="2016-01-09T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-10</time>
     
   </p>
 </header>
@@ -839,7 +843,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-07-08T14:50:38.000Z" itemprop="datePublished"> Published 2015-07-08</time>
+    <time datetime="2015-07-08T14:50:38.000Z" itemprop="datePublished"> 发表于 2015-07-08</time>
     
   </p>
 </header>
@@ -907,7 +911,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-04-15T16:00:00.000Z" itemprop="datePublished"> Published 2015-04-16</time>
+    <time datetime="2015-04-15T16:00:00.000Z" itemprop="datePublished"> 发表于 2015-04-16</time>
     
   </p>
 </header>
@@ -1001,7 +1005,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-04-12T14:50:38.000Z" itemprop="datePublished"> Published 2015-04-12</time>
+    <time datetime="2015-04-12T14:50:38.000Z" itemprop="datePublished"> 发表于 2015-04-12</time>
     
   </p>
 </header>
@@ -1099,10 +1103,10 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
   </nav>
 
 </div>
-      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
 
 <div id="asidepart">
-<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
 <aside class="clearfix">
 
   
@@ -1110,7 +1114,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
   
 <div class="categorieslist">
-	<p class="asidetitle">Categories</p>
+	<p class="asidetitle">分类</p>
 		<ul>
 		
 		  
@@ -1127,7 +1131,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
   
 <div class="tagslist">
-	<p class="asidetitle">Tags</p>
+	<p class="asidetitle">标签</p>
 		<ul class="clearfix">
 		
 			
@@ -1147,7 +1151,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/MapReduece/" title="MapReduece">MapReduece<sup>1</sup></a></li>
+				<li><a href="/tags/MapReduce/" title="MapReduce">MapReduce<sup>1</sup></a></li>
 			
 		
 			
@@ -1159,7 +1163,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/hadoop/" title="hadoop">hadoop<sup>1</sup></a></li>
+				<li><a href="/tags/MapReduece/" title="MapReduece">MapReduece<sup>1</sup></a></li>
 			
 		
 			
@@ -1171,7 +1175,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/MapReduce/" title="MapReduce">MapReduce<sup>1</sup></a></li>
+				<li><a href="/tags/hadoop/" title="hadoop">hadoop<sup>1</sup></a></li>
 			
 		
 			
@@ -1187,7 +1191,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
 
   <div class="linkslist">
-  <p class="asidetitle">Links</p>
+  <p class="asidetitle">友情链接</p>
     <ul>
         
           <li>
@@ -1209,11 +1213,11 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
 
   <div class="rsspart">
-	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
 </div>
 
   <div class="weiboshow">
-  <p class="asidetitle">Weibo</p>
+  <p class="asidetitle">新浪微博</p>
     <iframe width="100%" height="119" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=119&fansRow=2&ptype=1&speed=0&skin=9&isTitle=1&noborder=1&isWeibo=0&isFans=0&uid=null&verifier=&dpc=1"></iframe>
 </div>
 
@@ -1358,7 +1362,7 @@ var _hmt = _hmt || [];
 <!-- Totop Begin -->
 
 	<div id="totop">
-	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
 	</div>
 	<script src="/js/totop.js"></script>
 
