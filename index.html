@@ -44,7 +44,7 @@
 				<h1 class="site-name"><a href="/" title="Lazy Judy">Lazy Judy</a></h1>
 				<h2 class="blog-motto"></h2>
 			</div>
-			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
 			</a></div>
 			<nav class="animated">
 				<ul>
@@ -60,7 +60,7 @@
  					
 					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
 						<label>Search</label>
-						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
 						<input type="hidden" name="q" value="site:yoursite.com">
 					</form>
 					
@@ -85,7 +85,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2017-03-15T16:00:00.000Z" itemprop="datePublished"> 发表于 2017-03-16</time>
+    <time datetime="2017-03-15T16:00:00.000Z" itemprop="datePublished"> Published 2017-03-16</time>
     
   </p>
 </header>
@@ -107,6 +107,67 @@
 <h3 id="布隆过滤"><a href="#布隆过滤" class="headerlink" title="布隆过滤"></a>布隆过滤</h3><p>布隆过滤与上面的过滤很相似，不同点在于布隆过滤中预先设定一个列表，列表中有一些值，只要输入的当前行包含其中的任意一个值就认为该行满足条件可以输出。布隆过滤仍然只有map没有reduce。</p>
 <h3 id="Top-10"><a href="#Top-10" class="headerlink" title="Top 10"></a>Top 10</h3><p>Top10顾名思义就是从所有的输入行中过滤出某字段的前10名输入行。这种模式map阶段维护一个长度为10的列表，列表的长度小于10的时候向列表中直接添加，直到列表的长度等于10时，则删除列表中最小的元素并添加新元素。需要注意的是这种模式可以有多个map但只能有一个reduce，reduce从N个map输出的10N个元素中找出前10作为最终的输出。可以看出，由于只能有一个reduce所以如果取Top100甚至更多时，效率是很低的。因此这种模式只适合较小的取值。</p>
 <h3 id="去重"><a href="#去重" class="headerlink" title="去重"></a>去重</h3><p>去重既将所有输入中某个字段重复的输入过滤掉，例如，在所有用户评论中找出所有不同的用户名。这种模式中map的输出键是map的输入值，map的输出值是null。reduece只需输出reduece的输入key即可。</p>
+<h2 id="数据组织模式"><a href="#数据组织模式" class="headerlink" title="数据组织模式"></a>数据组织模式</h2><h3 id="分层结构"><a href="#分层结构" class="headerlink" title="分层结构"></a>分层结构</h3><p>该模式可将基于行的数据转换为分层的格式。<br>例如，给定一个帖子列表文件和评论列表文件，创建一个结构化的XML层次结构，嵌套的表示帖子及其相关评论。输出的形式如下：</p>
+<blockquote>
+<p>Posts<br>&emsp;Post<br>&emsp;&emsp;第一个帖子<br>&emsp;&emsp;Comment<br>&emsp;&emsp;&emsp;第一个帖子的第一条评论<br>&emsp;&emsp;/Comment<br>&emsp;&emsp;Comment<br>&emsp;&emsp;&emsp;第一个帖子的第二条评论<br>&emsp;&emsp;/Comment<br>&emsp;/Post<br>&emsp;Post<br>&emsp;&emsp;第二个帖子<br>&emsp;&emsp;Comment<br>&emsp;&emsp;&emsp;第二个帖子的第一条评论<br>&emsp;&emsp;/Comment<br>&emsp;&emsp;Comment<br>&emsp;&emsp;&emsp;第二个帖子的第二条评论<br>&emsp;&emsp;Comment<br>&emsp;/Post<br>Posts</p>
+</blockquote>
+<p>输入为两个文件，一个文件中每一行是一个帖子内容，其中有一个字段保存帖子id；另一个文件中每一行是一个评论，其中有一个字段保存与该评论对应的帖子id。</p>
+<p>具体实现思路为，map以两个文件为输入，实现两个mapper类分别用于处理帖子文件和评论文件。PostMapper用于处理帖子文件，输出的key为帖子id，输出value为字母“P”+输入的value（每一行的内容）。CommentMapper用于处理评论文件，输出key为该评论对应的帖子id，输出value为字母C+输入的value。其中，字母P和C是为了在reduce中key值相同的一组值中哪些是帖子哪些是评论。由于用到两个mapper，所以main函数中需要用MultipleInput.addInputPath（）为每一个mapper指定相应的文件。reduce可以很容易的区分出帖子和与该帖子对应的评论，将他们利用函数构建成xml格式再输出即可。</p>
+<h3 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h3><p>分区模式是将记录进行分类，但并不关心记录的顺序。需要注意的是必须要预先知道要分多少个分区。用一个实例来描述一下分区的用法。</p>
+<blockquote>
+<ul>
+<li>问题一：给定一组用户信息，按照最近访问日期中的年份信息对记录进行分区，一年对应一个分区。</li>
+</ul>
+</blockquote>
+<p>main函数需要配置成使用自定义分区器，分区器也需要配置，另外需要配置reduce的数目，每一个分区对应一个reduce。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//配置自定义分区器</span></div><div class="line">job.setPartitionerClass(LastAccessDatePartitioner.class);</div><div class="line"><span class="comment">//为分区设置最小的年份，例如文件中的用户是从2008到2011，那么就是分成4个分区，每个分区的标号就是当前年份减去最小年份</span></div><div class="line"><span class="comment">//2008对应的是标号为0的分区，2009年对应的是标号为1的分区	</span></div><div class="line">LastAccessDatePartitioner.setMinLastAccessDate(job,<span class="number">2008</span>);</div><div class="line"><span class="comment">//4个分区应该设置4个reduce</span></div><div class="line">job.setNumReduceTasks(<span class="number">4</span>);</div></pre></td></tr></table></figure>
+<p>map函数的输出key是年份，输出value就是输入value。然后需要实现LastAccessDatePartitioner类，完成分区器的定义，reduce直接输出即可。</p>
+<p>由于第一个例子不是特别清楚，我又在网上找个一个例子，现在对分区的理解应该是正确的了。直接上例子。</p>
+<blockquote>
+<ul>
+<li>问题二：按年龄段找出不同年龄段的男性和女性的最高收入。</li>
+</ul>
+</blockquote>
+<p>问题的输入如下</p>
+<blockquote>
+<ul>
+<li>Id Name Age Gender Salary<br>1201 gopal 45 Male 50,000<br>1202 manisha 40 Female 50,000<br>1203 khalil 34 Male 30,000<br>1204 prasanth 30 Male 30,000<br>1205 kiran 20 Male 40,000<br>1206 laxmi 25 Female 35,000<br>1207 bhavya 20 Female 15,000<br>1208 reshma 19 Female 15,000<br>1209 kranthi 22 Male 22,000<br>1210 Satish 24 Male 25,000<br>1211 Krishna 25 Male 25,000<br>1212 Arshad 28 Male 20,000<br>1213 lavanya 18 Female 8,000</li>
+</ul>
+</blockquote>
+<p>其中第一行的内容是对数据每一列含义的解释，在真实的输入文件中是没有这一行的。</p>
+<p>问题期望的输出如下：</p>
+<blockquote>
+<ul>
+<li><p>输出文件一 Part-00000<br>Female    15000<br>Male        40000</p>
+</li>
+<li><p>输出文件二 Part-00001<br>Female       35000<br>Male         31000</p>
+</li>
+<li><p>输出文件三 Part-00002<br>Female      51000<br>Male        50000</p>
+</li>
+</ul>
+</blockquote>
+<p>输出的每一个文件对应一个年龄段。</p>
+<p>下面我来阐述实现的思路。首先需要明确几点：</p>
+<blockquote>
+<ul>
+<li>分区器是在map结束以后，reduce开始之前工作的。</li>
+<li>分区器分几个分区，就应该有几个reduce，所以设置reduce数量的时候要注意。</li>
+<li>每个reduce产生一个输出文件，也就是分在一个区里的数据对应的输出在同一个输出文件中。</li>
+</ul>
+</blockquote>
+<p>map阶段输出key为性别字段，输出value为输入value；接着在partition阶段将年龄小于20、年龄大于20小于30以及年龄大于30的人分别分给三个reduce；因此，第一个reduce下面的应该是年龄小于20的两组数据，一组的key是Female，一组的key是Male，以此类推其他的两个reduce下面的数据就清楚了。reduce的工作很简单就是找出每组的最大值并输出即可。附上源码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.io.*;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.apache.hadoop.io.*;</div><div class="line"><span class="keyword">import</span> org.apache.hadoop.mapreduce.*;</div><div class="line"><span class="keyword">import</span> org.apache.hadoop.conf.*;</div><div class="line"><span class="keyword">import</span> org.apache.hadoop.conf.*;</div><div class="line"><span class="keyword">import</span> org.apache.hadoop.fs.*;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.apache.hadoop.mapreduce.lib.input.*;</div><div class="line"><span class="keyword">import</span> org.apache.hadoop.mapreduce.lib.output.*;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.apache.hadoop.util.*;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PartitionerExample</span> <span class="keyword">extends</span> <span class="title">Configured</span> <span class="keyword">implements</span> <span class="title">Tool</span></span></div><div class="line">&#123;</div><div class="line">   <span class="comment">//Map class</span></div><div class="line">	</div><div class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MapClass</span> <span class="keyword">extends</span> <span class="title">Mapper</span>&lt;<span class="title">LongWritable</span>,<span class="title">Text</span>,<span class="title">Text</span>,<span class="title">Text</span>&gt;</span></div><div class="line">   &#123;</div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(LongWritable key, Text value, Context context)</span></span></div><div class="line">      &#123;</div><div class="line">         <span class="keyword">try</span>&#123;</div><div class="line">            String[] str = value.toString().split(<span class="string">"\t"</span>, -<span class="number">3</span>);</div><div class="line">            String gender=str[<span class="number">3</span>];</div><div class="line">            context.write(<span class="keyword">new</span> Text(gender), <span class="keyword">new</span> Text(value));</div><div class="line">         &#125;</div><div class="line">         <span class="keyword">catch</span>(Exception e)</div><div class="line">         &#123;</div><div class="line">            System.out.println(e.getMessage());</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   <span class="comment">//Reducer class</span></div><div class="line">	</div><div class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">ReduceClass</span> <span class="keyword">extends</span> <span class="title">Reducer</span>&lt;<span class="title">Text</span>,<span class="title">Text</span>,<span class="title">Text</span>,<span class="title">IntWritable</span>&gt;</span></div><div class="line">   &#123;</div><div class="line">      <span class="keyword">public</span> <span class="keyword">int</span> max = -<span class="number">1</span>;</div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key, Iterable &lt;Text&gt; values, Context context)</span> <span class="keyword">throws</span> IOException, InterruptedException</span></div><div class="line">      &#123;</div><div class="line">         max = -<span class="number">1</span>;</div><div class="line">			</div><div class="line">         <span class="keyword">for</span> (Text val : values)</div><div class="line">         &#123;</div><div class="line">            String [] str = val.toString().split(<span class="string">"\t"</span>, -<span class="number">3</span>);</div><div class="line">            <span class="keyword">if</span>(Integer.parseInt(str[<span class="number">4</span>])&gt;max)</div><div class="line">            max=Integer.parseInt(str[<span class="number">4</span>]);</div><div class="line">         &#125;</div><div class="line">			</div><div class="line">         context.write(<span class="keyword">new</span> Text(key), <span class="keyword">new</span> IntWritable(max));</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   <span class="comment">//Partitioner class</span></div><div class="line">	</div><div class="line">   <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">CaderPartitioner</span> <span class="keyword">extends</span></span></div><div class="line">   <span class="title">Partitioner</span> &lt; <span class="title">Text</span>, <span class="title">Text</span> &gt;</div><div class="line">   &#123;</div><div class="line">      <span class="meta">@Override</span></div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getPartition</span><span class="params">(Text key, Text value, <span class="keyword">int</span> numReduceTasks)</span></span></div><div class="line">      &#123;</div><div class="line">         String[] str = value.toString().split(<span class="string">"\t"</span>);</div><div class="line">         <span class="keyword">int</span> age = Integer.parseInt(str[<span class="number">2</span>]);</div><div class="line">         </div><div class="line">         <span class="keyword">if</span>(numReduceTasks == <span class="number">0</span>)</div><div class="line">         &#123;</div><div class="line">            <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">         &#125;</div><div class="line">         </div><div class="line">         <span class="keyword">if</span>(age&lt;=<span class="number">20</span>)</div><div class="line">         &#123;</div><div class="line">            <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">         &#125;</div><div class="line">         <span class="keyword">else</span> <span class="keyword">if</span>(age&gt;<span class="number">20</span> &amp;&amp; age&lt;=<span class="number">30</span>)</div><div class="line">         &#123;</div><div class="line">            <span class="keyword">return</span> <span class="number">1</span> % numReduceTasks;</div><div class="line">         &#125;</div><div class="line">         <span class="keyword">else</span></div><div class="line">         &#123;</div><div class="line">            <span class="keyword">return</span> <span class="number">2</span> % numReduceTasks;</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   <span class="meta">@Override</span></div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">run</span><span class="params">(String[] arg)</span> <span class="keyword">throws</span> Exception</span></div><div class="line">   &#123;</div><div class="line">      Configuration conf = getConf();</div><div class="line">		</div><div class="line">      Job job = <span class="keyword">new</span> Job(conf, <span class="string">"topsal"</span>);</div><div class="line">      job.setJarByClass(PartitionerExample.class);</div><div class="line">		</div><div class="line">      FileInputFormat.setInputPaths(job, <span class="keyword">new</span> Path(arg[<span class="number">0</span>]));</div><div class="line">      FileOutputFormat.setOutputPath(job,<span class="keyword">new</span> Path(arg[<span class="number">1</span>]));</div><div class="line">		</div><div class="line">      job.setMapperClass(MapClass.class);</div><div class="line">		</div><div class="line">      job.setMapOutputKeyClass(Text.class);</div><div class="line">      job.setMapOutputValueClass(Text.class);</div><div class="line">      </div><div class="line">      <span class="comment">//set partitioner statement</span></div><div class="line">		</div><div class="line">      job.setPartitionerClass(CaderPartitioner.class);</div><div class="line">      job.setReducerClass(ReduceClass.class);</div><div class="line">      job.setNumReduceTasks(<span class="number">3</span>);</div><div class="line">      job.setInputFormatClass(TextInputFormat.class);</div><div class="line">		</div><div class="line">      job.setOutputFormatClass(TextOutputFormat.class);</div><div class="line">      job.setOutputKeyClass(Text.class);</div><div class="line">      job.setOutputValueClass(Text.class);</div><div class="line">		</div><div class="line">      System.exit(job.waitForCompletion(<span class="keyword">true</span>)? <span class="number">0</span> : <span class="number">1</span>);</div><div class="line">      <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String ar[])</span> <span class="keyword">throws</span> Exception</span></div><div class="line">   &#123;</div><div class="line">      <span class="keyword">int</span> res = ToolRunner.run(<span class="keyword">new</span> Configuration(), <span class="keyword">new</span> PartitionerExample(),ar);</div><div class="line">      System.exit(<span class="number">0</span>);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<h3 id="分箱"><a href="#分箱" class="headerlink" title="分箱"></a>分箱</h3><p>分箱模式是在map阶段对数据进行拆分，即将数据分为几类。这种模式只有map阶段。假设将数据分为n类，即有n个箱子，然后有m个mapper，由于每个mapper都有可能能会处理到这n类数据，所以每个mapper都会输出n个文件，那么一共就会输出m×n个文件。这也是这种模式的缺点所在。下面举一个实际例子说明一下这种模式的应用场景。</p>
+<blockquote>
+<ul>
+<li>问题：给定一组论坛的帖子，根据帖子的标签，将带有hadoop、pig、hive和hbase标签的帖子分别放到4个箱子中，另外，将帖子内容中提及hadoop的帖子放到一个额外的箱子中。</li>
+</ul>
+</blockquote>
+<p>由于不同的箱子要输出到不同的文件中，所以需要用到MultipleOutputs类。main函数中需要的操作如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//配置输出文件放在名为“bin”的目录下</span></div><div class="line">MultipleOutputs.addNameOutput(job,<span class="string">"bin"</span>,TextOutputFormat.class,Text.class,NullWritable.class);</div><div class="line"><span class="comment">//不需要reduce，所以将reduce数量设为0</span></div><div class="line">job.setNumReduceTasks(<span class="number">0</span>);</div></pre></td></tr></table></figure>
+<p>具体的实现思路其实很简单，map主要做的就是提取出每个输入帖子的标签，然后用多个if else语句来判断是否含有我们的目标标签（上面的4个标签），若含有则将这个帖子写到相应的箱子中。</p>
+<h3 id="全排序"><a href="#全排序" class="headerlink" title="全排序"></a>全排序</h3><p>（这个模式没有理解好）</p>
+<h3 id="混排"><a href="#混排" class="headerlink" title="混排"></a>混排</h3><p>这个模式简单来说就是将有序的数据进行打乱。打乱的方式很简单map的输出键为一个随机的数，输出值为输入值。reduce仅输出value即可。</p>
 <p><strong>未完待续</strong></p>
 
         
@@ -161,7 +222,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2017-03-13T16:00:00.000Z" itemprop="datePublished"> 发表于 2017-03-14</time>
+    <time datetime="2017-03-13T16:00:00.000Z" itemprop="datePublished"> Published 2017-03-14</time>
     
   </p>
 </header>
@@ -262,7 +323,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-13T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-14</time>
+    <time datetime="2016-01-13T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-14</time>
     
   </p>
 </header>
@@ -327,7 +388,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-11T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-12</time>
+    <time datetime="2016-01-11T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-12</time>
     
   </p>
 </header>
@@ -466,7 +527,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-10T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-11</time>
+    <time datetime="2016-01-10T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-11</time>
     
   </p>
 </header>
@@ -690,7 +751,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-10T08:30:00.000Z" itemprop="datePublished"> 发表于 2016-01-10</time>
+    <time datetime="2016-01-10T08:30:00.000Z" itemprop="datePublished"> Published 2016-01-10</time>
     
   </p>
 </header>
@@ -758,7 +819,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2016-01-09T16:00:00.000Z" itemprop="datePublished"> 发表于 2016-01-10</time>
+    <time datetime="2016-01-09T16:00:00.000Z" itemprop="datePublished"> Published 2016-01-10</time>
     
   </p>
 </header>
@@ -843,7 +904,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-07-08T14:50:38.000Z" itemprop="datePublished"> 发表于 2015-07-08</time>
+    <time datetime="2015-07-08T14:50:38.000Z" itemprop="datePublished"> Published 2015-07-08</time>
     
   </p>
 </header>
@@ -911,7 +972,7 @@
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-04-15T16:00:00.000Z" itemprop="datePublished"> 发表于 2015-04-16</time>
+    <time datetime="2015-04-15T16:00:00.000Z" itemprop="datePublished"> Published 2015-04-16</time>
     
   </p>
 </header>
@@ -1005,7 +1066,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 		<a href="/about" title="Judy" target="_blank" itemprop="author">Judy</a>
 		
   <p class="article-time">
-    <time datetime="2015-04-12T14:50:38.000Z" itemprop="datePublished"> 发表于 2015-04-12</time>
+    <time datetime="2015-04-12T14:50:38.000Z" itemprop="datePublished"> Published 2015-04-12</time>
     
   </p>
 </header>
@@ -1103,10 +1164,10 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
   </nav>
 
 </div>
-      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
 
 <div id="asidepart">
-<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
 <aside class="clearfix">
 
   
@@ -1114,7 +1175,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
   
 <div class="categorieslist">
-	<p class="asidetitle">分类</p>
+	<p class="asidetitle">Categories</p>
 		<ul>
 		
 		  
@@ -1131,7 +1192,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
   
 <div class="tagslist">
-	<p class="asidetitle">标签</p>
+	<p class="asidetitle">Tags</p>
 		<ul class="clearfix">
 		
 			
@@ -1151,7 +1212,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/MapReduce/" title="MapReduce">MapReduce<sup>1</sup></a></li>
+				<li><a href="/tags/MapReduece/" title="MapReduece">MapReduece<sup>1</sup></a></li>
 			
 		
 			
@@ -1163,7 +1224,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/MapReduece/" title="MapReduece">MapReduece<sup>1</sup></a></li>
+				<li><a href="/tags/hadoop/" title="hadoop">hadoop<sup>1</sup></a></li>
 			
 		
 			
@@ -1175,7 +1236,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 			
 		
 			
-				<li><a href="/tags/hadoop/" title="hadoop">hadoop<sup>1</sup></a></li>
+				<li><a href="/tags/MapReduce/" title="MapReduce">MapReduce<sup>1</sup></a></li>
 			
 		
 			
@@ -1191,7 +1252,7 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
 
   <div class="linkslist">
-  <p class="asidetitle">友情链接</p>
+  <p class="asidetitle">Links</p>
     <ul>
         
           <li>
@@ -1213,11 +1274,11 @@ jacman/wiki/配置指南" target="_blank" rel="external">配置文件传送门</
 
 
   <div class="rsspart">
-	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
 </div>
 
   <div class="weiboshow">
-  <p class="asidetitle">新浪微博</p>
+  <p class="asidetitle">Weibo</p>
     <iframe width="100%" height="119" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=119&fansRow=2&ptype=1&speed=0&skin=9&isTitle=1&noborder=1&isWeibo=0&isFans=0&uid=null&verifier=&dpc=1"></iframe>
 </div>
 
@@ -1362,7 +1423,7 @@ var _hmt = _hmt || [];
 <!-- Totop Begin -->
 
 	<div id="totop">
-	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
 	</div>
 	<script src="/js/totop.js"></script>
 
